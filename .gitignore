@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Data and outputs
+data/raw/
+data/interim/
+data/processed/
+models/
+reports/figures/
+
+# MLflow (ignored on main; will be tracked on research)
+mlruns/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
