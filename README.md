@@ -103,3 +103,57 @@ The `research` branch will also contain:
 - Screenshots in `reports/mlflow_screenshots/`.
 - An extended README section explaining which model was chosen and why, with a comparison table/plot.
 
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>model</th>
+      <th>accuracy</th>
+      <th>precision_macro</th>
+      <th>recall_macro</th>
+      <th>f1_macro</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>RandomForest</td>
+      <td>0.979163</td>
+      <td>0.978995</td>
+      <td>0.979027</td>
+      <td>0.978956</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>SVM-RBF</td>
+      <td>0.978189</td>
+      <td>0.978131</td>
+      <td>0.978161</td>
+      <td>0.977977</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>KNN</td>
+      <td>0.973126</td>
+      <td>0.973140</td>
+      <td>0.972973</td>
+      <td>0.972896</td>
+    </tr>
+  </tbody>
+</table>
+</div>
