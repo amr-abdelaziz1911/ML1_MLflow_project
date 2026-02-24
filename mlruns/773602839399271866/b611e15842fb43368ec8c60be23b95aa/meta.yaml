@@ -1,0 +1,15 @@
+artifact_uri: file:C:/Users/amrka/Desktop/ML project/mlruns/773602839399271866/b611e15842fb43368ec8c60be23b95aa/artifacts
+deleted_time: 1771859383825
+end_time: 1771859192719
+entry_point_name: ''
+experiment_id: '773602839399271866'
+lifecycle_stage: deleted
+run_id: b611e15842fb43368ec8c60be23b95aa
+run_name: KNN_run
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1771859189389
+status: 3
+tags: []
+user_id: amrka

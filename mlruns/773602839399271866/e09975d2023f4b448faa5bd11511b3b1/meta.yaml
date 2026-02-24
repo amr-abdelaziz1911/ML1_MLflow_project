@@ -1,0 +1,14 @@
+artifact_uri: file:C:/Users/amrka/Desktop/ML project/mlruns/773602839399271866/e09975d2023f4b448faa5bd11511b3b1/artifacts
+end_time: 1771858164340
+entry_point_name: ''
+experiment_id: '773602839399271866'
+lifecycle_stage: active
+run_id: e09975d2023f4b448faa5bd11511b3b1
+run_name: SVM-RBF_run
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1771858159926
+status: 3
+tags: []
+user_id: amrka

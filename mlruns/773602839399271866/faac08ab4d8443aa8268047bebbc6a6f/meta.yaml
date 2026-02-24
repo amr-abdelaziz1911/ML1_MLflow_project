@@ -1,0 +1,15 @@
+artifact_uri: file:C:/Users/amrka/Desktop/ML project/mlruns/773602839399271866/faac08ab4d8443aa8268047bebbc6a6f/artifacts
+deleted_time: 1771859383826
+end_time: 1771859164990
+entry_point_name: ''
+experiment_id: '773602839399271866'
+lifecycle_stage: deleted
+run_id: faac08ab4d8443aa8268047bebbc6a6f
+run_name: RandomForest_run
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1771859159519
+status: 3
+tags: []
+user_id: amrka
