@@ -55,7 +55,7 @@ def log_model(model, name: str) -> str:
     so it must not contain slashes or special characters.
     Returns the logged model URI.
     """
-    info = mlflow_sklearn.log_model(model, name=name)
+    info = mlflow_sklearn.log_model(model, artifact_path=name)
     return info.model_uri
 
 
@@ -83,7 +83,7 @@ def run_experiment(
         log_dataset_info(dataset_path, dataset_n_rows)
         log_model_params({"model_name": model_name, **model_params})
         log_metrics(metric_values)
-        model_uri = log_model(model, name=f"{model_name}_model")
+        model_uri = log_model(model, f"{model_name}_model")
 
         if register_as is not None:
             mv = mlflow.register_model(model_uri=model_uri, name=register_as)

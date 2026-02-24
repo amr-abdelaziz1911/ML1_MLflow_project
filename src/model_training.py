@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 
 import joblib
 import matplotlib.pyplot as plt
@@ -15,10 +16,19 @@ from sklearn.metrics import (
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 
-from .data_preprocessing import load_hand_landmarks, train_test_split_landmarks
+try:
+    from .data_preprocessing import load_hand_landmarks, train_test_split_landmarks
+except ImportError:  # fallback when run as plain script
+    from data_preprocessing import load_hand_landmarks, train_test_split_landmarks
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from mlflow_utils import run_experiment
+
+
 DATA_PATH = PROJECT_ROOT / "data" / "hand_landmarks.csv"
 MODELS_DIR = PROJECT_ROOT / "models"
 REPORTS_DIR = PROJECT_ROOT / "reports"
@@ -95,6 +105,24 @@ def main():
         trained_model, metrics = evaluate_model(name, model, X_train, y_train, X_test, y_test)
         metrics_list.append(metrics)
         trained_models[name] = trained_model
+
+        # Log this run to MLflow (research branch only).
+        run_experiment(
+            experiment_name="hand_gesture_classification",
+            run_name=f"{name}_run",
+            dataset_path=str(DATA_PATH),
+            dataset_n_rows=len(df),
+            model_name=name,
+            model=trained_model,
+            model_params=getattr(trained_model, "get_params", lambda: {})(),
+            metric_values={
+                "accuracy": metrics["accuracy"],
+                "precision_macro": metrics["precision_macro"],
+                "recall_macro": metrics["recall_macro"],
+                "f1_macro": metrics["f1_macro"],
+            },
+            register_as=None,  # you can set a registry name for the best model later
+        )
 
     df_metrics = save_metrics_table(metrics_list)
 

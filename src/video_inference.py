@@ -1,21 +1,29 @@
 import argparse
 from collections import deque, Counter
 from pathlib import Path
-from typing import Deque, List
+from typing import Deque, List, Optional
 
 import cv2
 import joblib
-import mediapipe as mp
 import numpy as np
 
-from .data_preprocessing import WRIST_INDEX, MIDDLE_FINGER_TIP_INDEX
+# Use the new MediaPipe Tasks API for hand landmarks.
+import urllib.request
+import mediapipe as mp
+from mediapipe.tasks import python as mp_python
+from mediapipe.tasks.python import vision as mp_vision
+
+try:
+    from .data_preprocessing import WRIST_INDEX, MIDDLE_FINGER_TIP_INDEX
+except ImportError:  # fallback when run as plain script
+    from data_preprocessing import WRIST_INDEX, MIDDLE_FINGER_TIP_INDEX
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MODELS_DIR = PROJECT_ROOT / "models"
 
 
-def preprocess_landmarks_for_model(landmarks: List[mp.framework.formats.landmark_pb2.NormalizedLandmark]):
+def preprocess_landmarks_for_model(landmarks: List) -> np.ndarray:
     """Apply the same recenter + scale transform as in training."""
     coords = np.array([[lm.x, lm.y, lm.z] for lm in landmarks], dtype=np.float32)
 
@@ -40,7 +48,7 @@ def sliding_window_mode(preds_window: Deque[str]) -> str:
 def run_video_inference(
     input_video: str,
     output_video: str,
-    model_path: str | None = None,
+    model_path: Optional[str] = None,
     window_size: int = 7,
 ):
     if model_path is None:
@@ -65,49 +73,64 @@ def run_video_inference(
     Path(output_video).parent.mkdir(parents=True, exist_ok=True)
     out = cv2.VideoWriter(output_video, fourcc, fps, (width, height))
 
-    mp_hands = mp.solutions.hands
-    mp_drawing = mp.solutions.drawing_utils
-    mp_styles = mp.solutions.drawing_styles
+    # Ensure the hand landmarker model file exists (download if needed).
+    model_path = PROJECT_ROOT / "hand_landmarker.task"
+    if not model_path.exists():
+        url = (
+            "https://storage.googleapis.com/mediapipe-models/hand_landmarker/"
+            "hand_landmarker/float16/1/hand_landmarker.task"
+        )
+        print("Downloading hand_landmarker.task model... This is a one-time download.")
+        urllib.request.urlretrieve(url, model_path)
+
+    base_options = mp_python.BaseOptions(model_asset_path=str(model_path))
+    options = mp_vision.HandLandmarkerOptions(
+        base_options=base_options,
+        num_hands=1,
+        min_hand_detection_confidence=0.5,
+        min_hand_presence_confidence=0.5,
+        min_tracking_confidence=0.5,
+    )
+    landmarker = mp_vision.HandLandmarker.create_from_options(options)
 
     preds_window: Deque[str] = deque(maxlen=window_size)
 
-    with mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.5) as hands:
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            result = hands.process(rgb)
+        # MediaPipe Tasks expects RGB images.
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+        result = landmarker.detect(mp_image)
 
-            if result.multi_hand_landmarks:
-                hand_landmarks = result.multi_hand_landmarks[0]
-                features = preprocess_landmarks_for_model(hand_landmarks.landmark)
-                pred = clf.predict(features)[0]
-                preds_window.append(str(pred))
-                smoothed_pred = sliding_window_mode(preds_window)
+        if result.hand_landmarks:
+            hand_landmarks = result.hand_landmarks[0]
+            features = preprocess_landmarks_for_model(hand_landmarks)
+            pred = clf.predict(features)[0]
+            preds_window.append(str(pred))
+            smoothed_pred = sliding_window_mode(preds_window)
 
-                mp_drawing.draw_landmarks(
-                    frame,
-                    hand_landmarks,
-                    mp_hands.HAND_CONNECTIONS,
-                    mp_styles.get_default_hand_landmarks_style(),
-                    mp_styles.get_default_hand_connections_style(),
-                )
+            # Draw landmarks (simple circles instead of the old connections API)
+            for lm in hand_landmarks:
+                x = int(lm.x * width)
+                y = int(lm.y * height)
+                cv2.circle(frame, (x, y), 3, (0, 255, 0), -1)
 
-                cv2.rectangle(frame, (10, 10), (260, 60), (0, 0, 0), -1)
-                cv2.putText(
-                    frame,
-                    f"{smoothed_pred}",
-                    (20, 45),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.9,
-                    (0, 255, 0),
-                    2,
-                    cv2.LINE_AA,
-                )
+            cv2.rectangle(frame, (10, 10), (260, 60), (0, 0, 0), -1)
+            cv2.putText(
+                frame,
+                f"{smoothed_pred}",
+                (20, 45),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.9,
+                (0, 255, 0),
+                2,
+                cv2.LINE_AA,
+            )
 
-            out.write(frame)
+        out.write(frame)
 
     cap.release()
     out.release()
